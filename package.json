@@ -2,8 +2,8 @@
   "name": "SSS-magazyn",
   "version": "1.0.0",
   "scripts": {
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "start": "expo start",
     "prebuild": "expo prebuild",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
@@ -11,8 +11,11 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.28.5",
     "expo": "^54.0.0",
+    "expo-camera": "~17.0.9",
     "expo-status-bar": "~3.0.8",
+    "expo-system-ui": "~6.0.8",
     "nativewind": "latest",
     "react": "19.1.0",
     "react-native": "0.81.5",
