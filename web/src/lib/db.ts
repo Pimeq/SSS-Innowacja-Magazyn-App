@@ -8,9 +8,11 @@ export interface User {
   username: string;
   first_name: string;
   last_name: string;
-  password: string;
+  password: string; 
+  role: "admin" | "worker" | "viewer";
   created_at: Date;
   updated_at: Date;
+  active: boolean;
 }
 
 export interface Session {
