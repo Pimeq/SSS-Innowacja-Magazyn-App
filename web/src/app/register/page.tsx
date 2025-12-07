@@ -7,10 +7,13 @@ import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  
+  const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,8 +22,7 @@ export default function RegisterPage() {
     setError("");
     setIsLoading(true);
 
-    // Validation
-    if (!email || !password || !confirmPassword || !name) {
+    if (!username || !firstName || !lastName || !password || !confirmPassword) {
       setError("All fields are required");
       setIsLoading(false);
       return;
@@ -45,8 +47,9 @@ export default function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email,
-          name,
+          username,
+          first_name: firstName,
+          last_name: lastName,
           password,
         }),
       });
@@ -59,9 +62,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // Auto sign in after registration
       const signInResult = await signIn("credentials", {
-        email,
+        username, 
         password,
         redirect: false,
       });
@@ -95,42 +97,65 @@ export default function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* USERNAME */}
           <div>
             <label
-              htmlFor="name"
+              htmlFor="username"
               className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Full Name
+              Username
             </label>
             <input
               type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="johndoe123"
               required
               className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* FIRST NAME */}
           <div>
             <label
-              htmlFor="email"
+              htmlFor="firstName"
               className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Email
+              First Name
             </label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
+              type="text"
+              id="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="John"
               required
               className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
+          {/* LAST NAME */}
+          <div>
+            <label
+              htmlFor="lastName"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Last Name
+            </label>
+            <input
+              type="text"
+              id="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Doe"
+              required
+              className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* PASSWORD */}
           <div>
             <label
               htmlFor="password"
@@ -149,6 +174,7 @@ export default function RegisterPage() {
             />
           </div>
 
+          {/* CONFIRM PASSWORD */}
           <div>
             <label
               htmlFor="confirmPassword"

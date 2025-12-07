@@ -7,7 +7,8 @@ import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  // Zmiana stanu z email na username
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -18,14 +19,16 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Przekazujemy username do funkcji signIn (zgodnie z konfiguracją w authOptions)
       const result = await signIn("credentials", {
-        email,
+        username, 
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError(result.error || "Failed to sign in");
+        // Dostosowanie komunikatu błędu
+        setError("Invalid username or password");
         setIsLoading(false);
       } else if (result?.ok) {
         router.push("/dashboard");
@@ -53,19 +56,20 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Pole Username zamiast Email */}
           <div>
             <label
-              htmlFor="email"
+              htmlFor="username"
               className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Email
+              Username
             </label>
             <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
               required
               className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
