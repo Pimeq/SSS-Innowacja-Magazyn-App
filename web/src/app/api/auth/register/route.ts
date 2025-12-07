@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser, getUserByEmail } from "@/lib/db";
+import { createUser, getUserByUsername } from "@/lib/db"; 
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, name, password } = body;
+    const { username, first_name, last_name, password } = body;
 
-    // Validation
-    if (!email || !password || !name) {
+    if (!username || !password || !first_name || !last_name) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
@@ -21,8 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user exists
-    const existingUser = await getUserByEmail(email);
+    const existingUser = await getUserByUsername(username);
     if (existingUser) {
       return NextResponse.json(
         { message: "User already exists" },
@@ -30,8 +28,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user
-    const user = await createUser(email, password, name);
+    const user = await createUser(username, password, first_name, last_name);
+    
     if (!user) {
       return NextResponse.json(
         { message: "Failed to create user" },
@@ -44,8 +42,9 @@ export async function POST(request: NextRequest) {
         message: "User created successfully",
         user: {
           id: user.id,
-          email: user.email,
-          name: user.name,
+          username: user.username,
+          first_name: user.first_name,
+          last_name: user.last_name,
         },
       },
       { status: 201 }
