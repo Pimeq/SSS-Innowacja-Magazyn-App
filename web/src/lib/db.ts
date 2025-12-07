@@ -5,9 +5,10 @@ const sql = neon(process.env.DATABASE_URL || "");
 
 export interface User {
   id: number;
-  email: string;
-  name: string | null;
-  password_hash: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  password: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -21,14 +22,15 @@ export interface Session {
 }
 
 // User functions
-export async function getUserByEmail(email: string): Promise<User | null> {
+
+export async function getUserByUsername(username: string): Promise<User | null> {
   try {
     const result = await sql`
-      SELECT * FROM users WHERE email = ${email}
+      SELECT * FROM users WHERE username = ${username}
     `;
     return result.length > 0 ? (result[0] as User) : null;
   } catch (error) {
-    console.error("Error getting user by email:", error);
+    console.error("Error getting user by username:", error);
     return null;
   }
 }
@@ -46,15 +48,17 @@ export async function getUserById(id: number): Promise<User | null> {
 }
 
 export async function createUser(
-  email: string,
+  username: string,
   password: string,
-  name?: string
+  first_name: string,
+  last_name: string
 ): Promise<User | null> {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+    
     const result = await sql`
-      INSERT INTO users (email, password_hash, name)
-      VALUES (${email}, ${hashedPassword}, ${name || null})
+      INSERT INTO users (username, password, first_name, last_name)
+      VALUES (${username}, ${hashedPassword}, ${first_name}, ${last_name})
       RETURNING *
     `;
     return result.length > 0 ? (result[0] as User) : null;
@@ -76,10 +80,9 @@ export async function verifyPassword(
   }
 }
 
-// Session functions
 export async function createSession(
   userId: number,
-  expiresIn: number = 7 * 24 * 60 * 60 * 1000 // 7 days
+  expiresIn: number = 7 * 24 * 60 * 60 * 1000 
 ): Promise<Session | null> {
   try {
     const sessionToken = `sess_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
@@ -106,6 +109,7 @@ export async function getSessionByToken(
       JOIN users u ON s.user_id = u.id
       WHERE s.session_token = ${token} AND s.expires > NOW()
     `;
+    
     if (result.length > 0) {
       const session = result[0] as any;
       return {
@@ -116,9 +120,10 @@ export async function getSessionByToken(
         created_at: new Date(session.created_at),
         user: {
           id: session.user_id,
-          email: session.email,
-          name: session.name,
-          password_hash: session.password_hash,
+          username: session.username,
+          first_name: session.first_name,
+          last_name: session.last_name,
+          password: session.password,
           created_at: new Date(session.created_at),
           updated_at: new Date(session.updated_at),
         },
