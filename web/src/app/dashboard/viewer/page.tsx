@@ -14,19 +14,17 @@ export default function ViewerPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-indigo-500 selection:text-white overflow-x-hidden">
       
-      {/* --- TŁO / BACKGROUND GLOWS --- */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px]" />
         <div className="absolute bottom-[10%] right-[-5%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[100px]" />
       </div>
 
-      {/* --- NAVBAR --- */}
       <nav className="relative z-50 px-6 py-6 flex justify-between items-center max-w-7xl mx-auto">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Globe className="text-white" size={20} />
           </div>
-          <span className="font-bold text-2xl tracking-tighter">Inno<span className="text-indigo-400">Mag</span></span>
+          <span className="font-bold text-2xl tracking-tighter">Projekt <span className="text-indigo-400">Innowacja</span></span>
         </div>
         
         <button 
@@ -38,11 +36,9 @@ export default function ViewerPage() {
         </button>
       </nav>
 
-      {/* --- HERO SECTION --- */}
       <main className="relative z-10 pt-20 pb-32 px-6 max-w-7xl mx-auto text-center md:text-left">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           
-          {/* Tekst Hero */}
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold uppercase tracking-widest">
               <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
@@ -71,20 +67,17 @@ export default function ViewerPage() {
             </div>
           </div>
 
-          {/* Abstrakcyjna Grafika / "Image" */}
           <div className="relative h-[400px] md:h-[500px] w-full">
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-3xl opacity-20 blur-2xl transform rotate-6 scale-95 animate-pulse"></div>
             <div className="absolute inset-0 bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center justify-center p-8 backdrop-blur-xl bg-opacity-60">
-                {/* Elementy dekoracyjne w środku */}
                 <div className="w-24 h-24 mb-6 rounded-2xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center shadow-lg">
                    <Zap size={40} className="text-white fill-white" />
                 </div>
                 <h3 className="text-2xl font-bold mb-2">Premium Innovation</h3>
                 <p className="text-center text-slate-400 text-sm">
-                  "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt."
+                  Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt.
                 </p>
                 
-                {/* Paski ładowania dla ozdoby */}
                 <div className="w-full max-w-[200px] mt-8 space-y-3 opacity-50">
                   <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
                     <div className="h-full w-[70%] bg-indigo-500 rounded-full"></div>
@@ -97,10 +90,8 @@ export default function ViewerPage() {
           </div>
         </div>
 
-        {/* --- FEATURES STRIP --- */}
         <div className="mt-32 grid md:grid-cols-3 gap-8">
           
-          {/* Card 1 */}
           <div className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all duration-300 group cursor-pointer">
             <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform">
               <Globe size={24} />
@@ -111,7 +102,6 @@ export default function ViewerPage() {
             </p>
           </div>
 
-          {/* Card 2 */}
           <div className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all duration-300 group cursor-pointer">
             <div className="w-12 h-12 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform">
               <Leaf size={24} />
@@ -122,7 +112,6 @@ export default function ViewerPage() {
             </p>
           </div>
 
-          {/* Card 3 */}
           <div className="p-8 rounded-3xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all duration-300 group cursor-pointer">
             <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform">
               <ShieldCheck size={24} />
@@ -135,19 +124,16 @@ export default function ViewerPage() {
 
         </div>
 
-        {/* --- TRUST BADGES (SLOP) --- */}
         <div className="mt-24 pt-12 border-t border-white/5">
           <p className="text-center text-slate-500 text-sm font-medium uppercase tracking-widest mb-8">Trusted by industry leaders</p>
           <div className="flex flex-wrap justify-center gap-12 opacity-40 grayscale hover:grayscale-0 transition-all duration-500">
-            {/* Fejkowe logotypy (tekstowe) */}
-            <h3 className="text-2xl font-bold">ACME Corp</h3>
-            <h3 className="text-2xl font-bold">Globex</h3>
-            <h3 className="text-2xl font-bold">Soylent</h3>
-            <h3 className="text-2xl font-bold">Umbrella</h3>
-            <h3 className="text-2xl font-bold">Cyberdyne</h3>
+            <h3 className="text-2xl font-bold">Company1</h3>
+            <h3 className="text-2xl font-bold">Company2</h3>
+            <h3 className="text-2xl font-bold">Company3</h3>
+            <h3 className="text-2xl font-bold">Company4</h3>
+            <h3 className="text-2xl font-bold">Company5</h3>
           </div>
         </div>
-
       </main>
     </div>
   );
