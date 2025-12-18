@@ -23,6 +23,24 @@ export interface Session {
   created_at: Date;
 }
 
+export type Role = 'worker' | 'admin' | 'viewer';
+
+interface SessionJoinRow {
+  id: number;
+  user_id: number;
+  session_token: string;
+  expires: Date;
+  created_at: Date;
+  username: string;
+  first_name: string;
+  last_name: string;
+  password: string;
+  role: string;
+  active: boolean;
+  user_created_at: Date;
+  updated_at: Date;
+}
+
 // User functions
 
 export async function getUserByUsername(username: string): Promise<User | null> {
@@ -107,27 +125,31 @@ export async function getSessionByToken(
 ): Promise<(Session & { user: User }) | null> {
   try {
     const result = await sql`
-      SELECT s.*, u.* FROM sessions s
+      SELECT s.*, u.*, u.created_at as user_created_at 
+      FROM sessions s
       JOIN users u ON s.user_id = u.id
       WHERE s.session_token = ${token} AND s.expires > NOW()
     `;
     
     if (result.length > 0) {
-      const session = result[0] as any;
+      const sessionRow = result[0] as unknown as SessionJoinRow;
+
       return {
-        id: session.id,
-        user_id: session.user_id,
-        session_token: session.session_token,
-        expires: new Date(session.expires),
-        created_at: new Date(session.created_at),
+        id: sessionRow.id,
+        user_id: sessionRow.user_id,
+        session_token: sessionRow.session_token,
+        expires: new Date(sessionRow.expires),
+        created_at: new Date(sessionRow.created_at),
         user: {
-          id: session.user_id,
-          username: session.username,
-          first_name: session.first_name,
-          last_name: session.last_name,
-          password: session.password,
-          created_at: new Date(session.created_at),
-          updated_at: new Date(session.updated_at),
+          id: sessionRow.user_id,
+          username: sessionRow.username,
+          first_name: sessionRow.first_name,
+          last_name: sessionRow.last_name,
+          password: sessionRow.password,
+          role: sessionRow.role as Role,
+          created_at: new Date(sessionRow.user_created_at || sessionRow.created_at),
+          updated_at: new Date(sessionRow.updated_at),
+          active: sessionRow.active 
         },
       };
     }
@@ -157,5 +179,152 @@ export async function cleanupExpiredSessions(): Promise<void> {
     `;
   } catch (error) {
     console.error("Error cleaning up expired sessions:", error);
+  }
+}
+
+// --- STOCK MANAGEMENT FUNCTIONS ---
+
+export interface ProductSimple {
+  id: number;
+  name: string;
+  qr_code: string;
+}
+
+export interface LocationSimple {
+  id: number;
+  name: string;
+}
+
+export async function getAllProducts(): Promise<ProductSimple[]> {
+  try {
+    const result = await sql`SELECT id, name, qr_code FROM products ORDER BY name ASC`;
+    return result as ProductSimple[];
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+}
+
+export async function getAllLocations(): Promise<LocationSimple[]> {
+  try {
+    const result = await sql`SELECT id, name FROM locations ORDER BY name ASC`;
+    return result as LocationSimple[];
+  } catch (error) {
+    console.error("Error fetching locations:", error);
+    return [];
+  }
+}
+
+export async function getStockQuantity(productId: number, locationId: number): Promise<number> {
+  const result = await sql`
+    SELECT quantity FROM stock 
+    WHERE product_id = ${productId} AND location_id = ${locationId}
+  `;
+  return result.length > 0 ? result[0].quantity : 0;
+}
+
+
+export async function processStockMovement(
+  userId: number,
+  type: 'IN' | 'OUT' | 'MOVE',
+  productId: number,
+  quantity: number,
+  fromLocationId: number | null,
+  toLocationId: number | null
+): Promise<{ success: boolean; message: string }> {
+  
+  if (quantity <= 0) return { success: false, message: "Ilość musi być dodatnia" };
+
+  try {
+    if (type === 'OUT' || type === 'MOVE') {
+      if (!fromLocationId) return { success: false, message: "Brak lokalizacji źródłowej" };
+
+      const currentQty = await getStockQuantity(productId, fromLocationId);
+      if (currentQty < quantity) {
+        return { success: false, message: `Brak wystarczającej ilości towaru (Dostępne: ${currentQty})` };
+      }
+
+      await sql`
+        UPDATE stock 
+        SET quantity = quantity - ${quantity}, updated_at = NOW()
+        WHERE product_id = ${productId} AND location_id = ${fromLocationId}
+      `;
+      
+      await sql`DELETE FROM stock WHERE quantity = 0 AND product_id = ${productId} AND location_id = ${fromLocationId}`;
+    }
+
+    if (type === 'IN' || type === 'MOVE') {
+      if (!toLocationId) return { success: false, message: "Brak lokalizacji docelowej" };
+
+      const existing = await sql`
+        SELECT id FROM stock WHERE product_id = ${productId} AND location_id = ${toLocationId}
+      `;
+
+      if (existing.length > 0) {
+        await sql`
+          UPDATE stock 
+          SET quantity = quantity + ${quantity}, updated_at = NOW()
+          WHERE product_id = ${productId} AND location_id = ${toLocationId}
+        `;
+      } else {
+        await sql`
+          INSERT INTO stock (product_id, location_id, quantity)
+          VALUES (${productId}, ${toLocationId}, ${quantity})
+        `;
+      }
+    }
+
+    await sql`
+      INSERT INTO stock_history (
+        product_id, from_locations_id, to_locations_id, quantity, type, user_id
+      ) VALUES (
+        ${productId}, ${fromLocationId}, ${toLocationId}, ${quantity}, ${type}, ${userId}
+      )
+    `;
+
+    return { success: true, message: "Operacja zakończona sukcesem" };
+
+  } catch (error) {
+    console.error("Stock transaction error:", error);
+    return { success: false, message: "Błąd bazy danych podczas operacji" };
+  }
+}
+
+export interface StockItemDetailed {
+  id: number;
+  product_id: number;
+  location_id: number;
+  product_name: string;
+  qr_code: string;
+  location_name: string;
+  quantity: number;
+  updated_at: Date;
+}
+
+export async function getStockList(): Promise<StockItemDetailed[]> {
+  try {
+    const result = await sql`
+      SELECT 
+        s.id, 
+        s.product_id,
+        s.location_id,
+        p.name as product_name, 
+        p.qr_code, 
+        l.name as location_name, 
+        s.quantity,
+        s.updated_at
+      FROM stock s
+      JOIN products p ON s.product_id = p.id
+      JOIN locations l ON s.location_id = l.id
+      ORDER BY p.name ASC, l.name ASC
+    `;
+    
+    return result.map((row: any) => ({
+      ...row,
+      updated_at: new Date(row.updated_at)
+    })) as StockItemDetailed[];
+  } catch (error) {
+    console.error("Error fetching stock list:", error);
+    return [];
   }
 }
