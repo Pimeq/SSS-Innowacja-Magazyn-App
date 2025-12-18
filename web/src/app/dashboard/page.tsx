@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "../api/auth/__nextauth/authOptions"; 
+import { authOptions } from "../api/auth/__nextauth/authOptions";
 import { redirect } from "next/navigation";
 
 export default async function DashboardRoot() {
@@ -14,10 +14,14 @@ export default async function DashboardRoot() {
   switch (role) {
     case "admin":
       redirect("/dashboard/admin");
+      break;
     case "worker":
       redirect("/dashboard/worker");
-    case "viewer":
+      break;
     default:
-      redirect("/dashboard/viewer");
+      redirect("/"); 
+      break;
   }
+  
+  return null;
 }
