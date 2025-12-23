@@ -20,7 +20,12 @@ export default function Index() {
 	const [productsCount, setProductsCount] = useState<number>(0)
 	const [locationsCount, setLocationsCount] = useState<number>(0)
 	const [topProducts, setTopProducts] = useState<
-		Array<{ id: number; name: string; qr_code: string; total_quantity?: number }>
+		Array<{
+			id: number
+			name: string
+			qr_code: string
+			total_quantity?: number
+		}>
 	>([])
 
 	useEffect(() => {
@@ -200,7 +205,9 @@ export default function Index() {
 									<Text className="font-bold text-gray-900 text-base">
 										{item.name}
 									</Text>
-									<Text className="text-gray-500 text-xs mt-0.5">QR: {item.qr_code}</Text>
+									<Text className="text-gray-500 text-xs mt-0.5">
+										QR: {item.qr_code}
+									</Text>
 									<Text className="text-gray-900 text-xs mt-0.5 font-semibold">
 										Total qty: {item.total_quantity ?? 0}
 									</Text>

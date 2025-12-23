@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createProduct, getAllProducts, getProductByQrCode, getProductTotals } from "@/lib/db"
+import {
+	createProduct,
+	getAllProducts,
+	getProductByQrCode,
+	getProductTotals,
+} from "@/lib/db"
 import { verifyMobileRequest } from "@/lib/mobileAuth"
 
 export async function GET(request: NextRequest) {
@@ -14,8 +19,13 @@ export async function GET(request: NextRequest) {
 	try {
 		const products = await getAllProducts()
 		const totals = await getProductTotals()
-		const totalsMap = new Map<number, number>(totals.map(t => [t.product_id, Number(t.total_quantity) || 0]))
-		const productsWithTotals = products.map(p => ({ ...p, total_quantity: totalsMap.get(p.id) ?? 0 }))
+		const totalsMap = new Map<number, number>(
+			totals.map((t) => [t.product_id, Number(t.total_quantity) || 0])
+		)
+		const productsWithTotals = products.map((p) => ({
+			...p,
+			total_quantity: totalsMap.get(p.id) ?? 0,
+		}))
 		return NextResponse.json(
 			{
 				success: true,

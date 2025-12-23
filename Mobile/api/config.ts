@@ -61,7 +61,12 @@ export class ApiClient {
 	async getProducts() {
 		return this.request<{
 			success: boolean
-			data: Array<{ id: number; name: string; qr_code: string; total_quantity?: number }>
+			data: Array<{
+				id: number
+				name: string
+				qr_code: string
+				total_quantity?: number
+			}>
 			count: number
 		}>("/products")
 	}
