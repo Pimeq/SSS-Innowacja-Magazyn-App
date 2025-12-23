@@ -108,7 +108,9 @@ export default function Products() {
 				<Text className="text-xs text-gray-500 uppercase font-bold mb-2">
 					Filter by location
 				</Text>
-				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}>
 					<View className="flex-row gap-2">
 						<TouchableOpacity
 							className={`px-3 py-2 rounded-lg border ${selectedLocationId === null ? "bg-blue-600 border-blue-600" : "bg-white border-gray-200"}`}
@@ -161,7 +163,7 @@ export default function Products() {
 								<Text className="text-gray-500 text-xs mt-0.5">
 									QR: {item.qr_code}
 								</Text>
-								{selectedLocationId ? (
+								{selectedLocationId ?
 									<Text className="text-gray-900 text-xs mt-0.5 font-semibold">
 										Qty at location:{" "}
 										{(
@@ -170,16 +172,16 @@ export default function Products() {
 											(item as any).quantity
 										:	0}
 									</Text>
-								) : (
-									<Text className="text-gray-900 text-xs mt-0.5 font-semibold">
+								:	<Text className="text-gray-900 text-xs mt-0.5 font-semibold">
 										Total qty:{" "}
 										{(
-											"total_quantity" in item && (item as any).total_quantity !== undefined
+											"total_quantity" in item &&
+											(item as any).total_quantity !== undefined
 										) ?
 											(item as any).total_quantity
 										:	0}
 									</Text>
-								)}
+								}
 							</View>
 						</View>
 					)}
