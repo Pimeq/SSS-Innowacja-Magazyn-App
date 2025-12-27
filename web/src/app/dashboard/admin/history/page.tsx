@@ -9,12 +9,16 @@ import { useEffect, useState } from "react";
 interface StockHistory {
   id: number;
   product_id: number;
-  location_id: number;
-  quantity_change: number;
-  action: string;
-  performed_by_name: string;
+  from_location_id: number;
+  to_location_id: number;
+  quantity: number;
+  type: string;
+  user_id: number;
   product_name: string;
-  location_name: string;
+  from_location_name: string;
+  to_location_name: string;
+  first_name: string;
+  last_name: string;
   created_at: string;
 }
 
@@ -38,14 +42,14 @@ export default function HistoryPage() {
     }
   };
 
-  const getActionBadge = (action: string) => {
+  const getTypeBadge = (type: string) => {
     const variants: Record<string, string> = {
-      add: "bg-green-100 text-green-800",
-      remove: "bg-red-100 text-red-800",
-      move: "bg-blue-100 text-blue-800",
-      adjust: "bg-yellow-100 text-yellow-800",
+      stock_move: "bg-blue-100 text-blue-800",
+      stock_add: "bg-green-100 text-green-800",
+      stock_remove: "bg-red-100 text-red-800",
+      stock_adjust: "bg-yellow-100 text-yellow-800",
     };
-    return variants[action.toLowerCase()] || variants.add;
+    return variants[type.toLowerCase()] || variants.stock_add;
   };
 
   const formatDate = (date: string) => {
@@ -67,10 +71,11 @@ export default function HistoryPage() {
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Produkt</TableHead>
-                  <TableHead>Lokalizacja</TableHead>
-                  <TableHead>Typ akcji</TableHead>
-                  <TableHead>Zmiana ilości</TableHead>
-                  <TableHead>Wykonał</TableHead>
+                  <TableHead>Z lokalizacji</TableHead>
+                  <TableHead>Do lokalizacji</TableHead>
+                  <TableHead>Typ</TableHead>
+                  <TableHead>Ilość</TableHead>
+                  <TableHead>Użytkownik</TableHead>
                   <TableHead>Data i godzina</TableHead>
                 </TableRow>
               </TableHeader>
@@ -79,17 +84,15 @@ export default function HistoryPage() {
                   <TableRow key={entry.id}>
                     <TableCell>{entry.id}</TableCell>
                     <TableCell>{entry.product_name}</TableCell>
-                    <TableCell>{entry.location_name}</TableCell>
+                    <TableCell>{entry.from_location_name}</TableCell>
+                    <TableCell>{entry.to_location_name}</TableCell>
                     <TableCell>
-                      <Badge className={getActionBadge(entry.action)}>
-                        {entry.action}
+                      <Badge className={getTypeBadge(entry.type)}>
+                        {entry.type.replace(/_/g, " ")}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {entry.quantity_change > 0 ? "+" : ""}
-                      {entry.quantity_change}
-                    </TableCell>
-                    <TableCell>{entry.performed_by_name || "System"}</TableCell>
+                    <TableCell className="font-medium">{entry.quantity}</TableCell>
+                    <TableCell>{entry.first_name} {entry.last_name}</TableCell>
                     <TableCell>{formatDate(entry.created_at)}</TableCell>
                   </TableRow>
                 ))}
