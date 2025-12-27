@@ -20,6 +20,8 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<StatsCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lowStock, setLowStock] = useState<{ product_id: number; product_name: string; total: number }[]>([]);
+  const [operations, setOperations] = useState<any[]>([]);
 
   useEffect(() => {
     if (session && session.user?.role !== 'admin') {
@@ -69,6 +71,36 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    const fetchLowStockAndOperations = async () => {
+      try {
+        // Low stock: aggregate totals per product across all locations
+        const stockRes = await fetch("/api/admin/stock");
+        const stockData = await stockRes.json();
+        const totals = new Map<number, { name: string; total: number }>();
+        for (const row of stockData) {
+          const current = totals.get(row.product_id) || { name: row.product_name, total: 0 };
+          current.total += Number(row.quantity) || 0;
+          totals.set(row.product_id, current);
+        }
+        const low = Array.from(totals.entries())
+          .map(([product_id, v]) => ({ product_id, product_name: v.name, total: v.total }))
+          .filter((p) => p.total < 10)
+          .sort((a, b) => a.total - b.total)
+          .slice(0, 8);
+        setLowStock(low);
+
+        // Recent operations: latest stock_history entries
+        const histRes = await fetch("/api/admin/history");
+        const histData = await histRes.json();
+        setOperations(Array.isArray(histData) ? histData.slice(0, 8) : []);
+      } catch (e) {
+        console.error("Failed to fetch dashboard data:", e);
+      }
+    };
+    fetchLowStockAndOperations();
+  }, []);
+
   if (!session || session.user?.role !== 'admin') {
     return null;
   }
@@ -101,8 +133,18 @@ export default function AdminDashboard() {
                 <AlertTriangle className="size-5 text-orange-500" />
                 <h3 className="font-semibold">Produkty o niskim stanie</h3>
               </div>
-              <p className="text-2xl font-bold">-</p>
-              <p className="text-sm text-slate-600 mt-2">Brak danych</p>
+              {lowStock.length === 0 ? (
+                <p className="text-sm text-slate-600">Brak produktów poniżej progu</p>
+              ) : (
+                <div className="space-y-2">
+                  {lowStock.map((p) => (
+                    <div key={p.product_id} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
+                      <span className="font-medium">{p.product_name}</span>
+                      <span className="text-sm text-slate-700">Suma: {p.total}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -112,7 +154,25 @@ export default function AdminDashboard() {
                 <TrendingUp className="size-5 text-green-500" />
                 <h3 className="font-semibold">Ostatnie operacje</h3>
               </div>
-              <p className="text-sm text-slate-600">Brak danych</p>
+              {operations.length === 0 ? (
+                <p className="text-sm text-slate-600">Brak danych</p>
+              ) : (
+                <div className="space-y-2">
+                  {operations.map((op) => (
+                    <div key={op.id} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{op.product_name}</span>
+                        <span className="text-sm text-slate-700">
+                          {op.type} • {op.from_location_name} → {op.to_location_name} • ilość: {op.quantity}
+                        </span>
+                      </div>
+                      <span className="text-sm text-slate-600">
+                        {op.first_name && op.last_name ? `${op.first_name} ${op.last_name}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

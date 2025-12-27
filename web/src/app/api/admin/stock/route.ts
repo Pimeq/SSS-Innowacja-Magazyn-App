@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/__nextauth/authOptions";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -78,6 +80,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { product_id, location_id, quantity } = body;
+    const session = await getServerSession(authOptions);
+    const actorId = session?.user?.id ? parseInt(session.user.id) : null;
 
     const existingStock = await sql`SELECT * FROM stock WHERE product_id = ${product_id} AND location_id = ${location_id}`;
 
@@ -86,11 +90,17 @@ export async function POST(request: Request) {
          SET quantity = quantity + ${quantity}, updated_at = NOW() 
          WHERE product_id = ${product_id} AND location_id = ${location_id} 
          RETURNING *`;
+      // Log adjustment in history (from = to = location)
+      await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
+        VALUES (${product_id}, ${location_id}, ${location_id}, ${quantity}, ${"stock_adjust"}, ${actorId}, NOW())`;
       return NextResponse.json(result[0]);
     } else {
       const result = await sql`INSERT INTO stock (product_id, location_id, quantity) 
          VALUES (${product_id}, ${location_id}, ${quantity}) 
          RETURNING *`;
+      // Log creation/add in history (from = to = location)
+      await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
+        VALUES (${product_id}, ${location_id}, ${location_id}, ${quantity}, ${"stock_add"}, ${actorId}, NOW())`;
       return NextResponse.json(result[0]);
     }
   } catch (error) {
