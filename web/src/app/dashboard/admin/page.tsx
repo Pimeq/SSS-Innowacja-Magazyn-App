@@ -1,176 +1,108 @@
-"use client";
+'use client';
 
-import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { AdminLayout } from "@/components/admin/Layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Package, Users, MapPin, Warehouse, AlertTriangle, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
 
-export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+
+interface StatsCard {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color: string;
+}
+
+export default function AdminDashboard() {
+  const [stats, setStats] = useState<StatsCard[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/admin/stats");
+        const data = await res.json();
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="text-white text-2xl">Loading...</div>
-      </div>
-    );
-  }
+        setStats([
+          {
+            title: "Produkty",
+            value: data.totalProducts,
+            icon: <Package className="size-6 text-white" />,
+            color: "bg-blue-500",
+          },
+          {
+            title: "Aktywni użytkownicy",
+            value: data.activeUsers,
+            icon: <Users className="size-6 text-white" />,
+            color: "bg-green-500",
+          },
+          {
+            title: "Lokalizacje",
+            value: data.totalLocations,
+            icon: <MapPin className="size-6 text-white" />,
+            color: "bg-purple-500",
+          },
+          {
+            title: "Całkowity stan",
+            value: data.totalStockValue,
+            icon: <Warehouse className="size-6 text-white" />,
+            color: "bg-orange-500",
+          },
+        ]);
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!session) {
-    return null;
-  }
-
-  const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: "/" });
-  };
+    fetchStats();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-      {/* Navbar */}
-      <nav className="bg-slate-800 border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-white text-2xl font-bold">Admin Panel</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-slate-300">{session.user?.email}</span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition duration-200"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+    <AdminLayout title="Dashboard">
+      <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat) => (
+            <Card key={stat.title}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">{stat.title}</p>
+                    <p className="mt-2 text-3xl font-bold">{stat.value}</p>
+                  </div>
+                  <div className={`${stat.color} p-3 rounded-lg`}>
+                    {stat.icon}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-            Welcome, {session.user?.name || session.user?.email}!
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-8">
-            You are successfully logged in. Your session will remain active for 7 days.
-          </p>
-
-          {/* Session Info Card */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-slate-50 dark:bg-slate-700 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                Session Information
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Email
-                  </p>
-                  <p className="text-slate-900 dark:text-white font-medium">
-                    {session.user?.email}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Name
-                  </p>
-                  <p className="text-slate-900 dark:text-white font-medium">
-                    {session.user?.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    User ID
-                  </p>
-                  <p className="text-slate-900 dark:text-white font-medium">
-                    {session.user?.id}
-                  </p>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="size-5 text-orange-500" />
+                <h3 className="font-semibold">Produkty o niskim stanie</h3>
               </div>
-            </div>
+              <p className="text-2xl font-bold">-</p>
+              <p className="text-sm text-slate-600 mt-2">Brak danych</p>
+            </CardContent>
+          </Card>
 
-            {/* Features Card */}
-            <div className="bg-slate-50 dark:bg-slate-700 p-6 rounded-lg">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                Session Details
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Status
-                  </p>
-                  <p className="text-slate-900 dark:text-white font-medium">
-                    <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                    Active
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Session Duration
-                  </p>
-                  <p className="text-slate-900 dark:text-white font-medium">
-                    7 days
-                  </p>
-                </div>
-                <div>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm">
-                    Auth Provider
-                  </p>
-                  <p className="text-slate-900 dark:text-white font-medium">
-                    Credentials (Neon DB)
-                  </p>
-                </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="size-5 text-green-500" />
+                <h3 className="font-semibold">Ostatnie operacje</h3>
               </div>
-            </div>
-          </div>
-
-          {/* Dashboard Sections */}
-          <div className="mt-8">
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-              Dashboard Content
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "Analytics",
-                  description: "View your analytics and statistics",
-                  icon: "📊",
-                },
-                {
-                  title: "Settings",
-                  description: "Manage your account settings",
-                  icon: "⚙️",
-                },
-                {
-                  title: "Reports",
-                  description: "Generate and view reports",
-                  icon: "📄",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="bg-slate-50 dark:bg-slate-700 p-6 rounded-lg hover:shadow-lg transition duration-200"
-                >
-                  <div className="text-4xl mb-3">{item.icon}</div>
-                  <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {item.title}
-                  </h4>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {item.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+              <p className="text-sm text-slate-600">Brak danych</p>
+            </CardContent>
+          </Card>
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
