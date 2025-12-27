@@ -7,6 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const locationId = searchParams.get("location_id");
+    const productId = searchParams.get("product_id");
 
     let result;
     if (locationId) {
@@ -26,6 +27,24 @@ export async function GET(request: Request) {
         JOIN locations l ON s.location_id = l.id
         WHERE s.location_id = ${locId}
         ORDER BY s.updated_at DESC
+      `;
+    } else if (productId) {
+      const prodId = parseInt(productId);
+      result = await sql`
+        SELECT 
+          s.id, 
+          s.product_id, 
+          s.location_id, 
+          s.quantity,
+          p.name as product_name,
+          p.qr_code,
+          l.name as location_name,
+          s.updated_at
+        FROM stock s
+        JOIN products p ON s.product_id = p.id
+        JOIN locations l ON s.location_id = l.id
+        WHERE s.product_id = ${prodId}
+        ORDER BY l.name ASC
       `;
     } else {
       result = await sql`
