@@ -10,11 +10,9 @@ export async function PUT(
   try {
     const body = await request.json();
     const { name, description } = body;
+    const id = parseInt(params.id);
 
-    const result = await sql(
-      "UPDATE locations SET name = $1, description = $2 WHERE id = $3 RETURNING *",
-      [name, description, params.id]
-    );
+    const result = await sql`UPDATE locations SET name = ${name}, description = ${description} WHERE id = ${id} RETURNING *`;
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -31,7 +29,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await sql("DELETE FROM locations WHERE id = $1", [params.id]);
+    const id = parseInt(params.id);
+    await sql`DELETE FROM locations WHERE id = ${id}`;
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -10,11 +10,9 @@ export async function PUT(
   try {
     const body = await request.json();
     const { name, qr_code, description } = body;
+    const id = parseInt(params.id);
 
-    const result = await sql(
-      "UPDATE products SET name = $1, qr_code = $2, description = $3 WHERE id = $4 RETURNING *",
-      [name, qr_code, description, params.id]
-    );
+    const result = await sql`UPDATE products SET name = ${name}, qr_code = ${qr_code}, description = ${description} WHERE id = ${id} RETURNING *`;
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -31,7 +29,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await sql("DELETE FROM products WHERE id = $1", [params.id]);
+    const id = parseInt(params.id);
+    await sql`DELETE FROM products WHERE id = ${id}`;
 
     return NextResponse.json({ success: true });
   } catch (error) {

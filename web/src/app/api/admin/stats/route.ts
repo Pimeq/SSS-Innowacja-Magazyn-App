@@ -5,14 +5,10 @@ const sql = neon(process.env.DATABASE_URL || "");
 
 export async function GET() {
   try {
-    const products = await sql("SELECT COUNT(*) as count FROM products");
-    const users = await sql(
-      "SELECT COUNT(*) as count FROM users WHERE active = true"
-    );
-    const locations = await sql("SELECT COUNT(*) as count FROM locations");
-    const stock = await sql(
-      "SELECT SUM(quantity) as total FROM stock"
-    );
+    const products = await sql`SELECT COUNT(*) as count FROM products`;
+    const users = await sql`SELECT COUNT(*) as count FROM users WHERE active = true`;
+    const locations = await sql`SELECT COUNT(*) as count FROM locations`;
+    const stock = await sql`SELECT SUM(quantity) as total FROM stock`;
 
     return NextResponse.json({
       totalProducts: products[0]?.count || 0,

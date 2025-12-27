@@ -10,21 +10,16 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { username, password, first_name, last_name, role, active } = body;
+    const { email, name, password, role, active } = body;
+    const id = parseInt(params.id);
 
-    let query =
-      "UPDATE users SET username = $1, first_name = $2, last_name = $3, role = $4, active = $5";
-    let values: any[] = [username, first_name, last_name, role, active, params.id];
-
+    let result;
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += ", password = $6";
-      values = [username, first_name, last_name, role, active, hashedPassword, params.id];
+      result = await sql`UPDATE users SET email = ${email}, name = ${name}, password = ${hashedPassword}, role = ${role}, active = ${active} WHERE id = ${id} RETURNING id, name, email, role, active`;
+    } else {
+      result = await sql`UPDATE users SET email = ${email}, name = ${name}, role = ${role}, active = ${active} WHERE id = ${id} RETURNING id, name, email, role, active`;
     }
-
-    query += " WHERE id = $" + (values.length) + " RETURNING id, username, first_name, last_name, role, active";
-
-    const result = await sql(query, values);
 
     return NextResponse.json(result[0]);
   } catch (error) {
@@ -41,7 +36,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await sql("DELETE FROM users WHERE id = $1", [params.id]);
+    const id = parseInt(params.id);
+    await sql`DELETE FROM users WHERE id = ${id}`;
 
     return NextResponse.json({ success: true });
   } catch (error) {
