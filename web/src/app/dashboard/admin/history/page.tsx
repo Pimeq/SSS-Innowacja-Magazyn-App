@@ -9,8 +9,8 @@ import { useEffect, useState } from "react";
 interface StockHistory {
   id: number;
   product_id: number;
-  from_location_id: number;
-  to_location_id: number;
+  from_locations_id: number;
+  to_locations_id: number;
   quantity: number;
   type: string;
   user_id: number;
