@@ -9,8 +9,8 @@ export async function GET(request: Request) {
       SELECT 
         sh.id,
         sh.product_id,
-        sh.from_location_id,
-        sh.to_location_id,
+        sh.from_locations_id,
+        sh.to_locations_id,
         sh.quantity,
         sh.type,
         sh.user_id,
@@ -22,8 +22,8 @@ export async function GET(request: Request) {
         u.last_name
       FROM stock_history sh
       JOIN products p ON sh.product_id = p.id
-      JOIN locations l1 ON sh.from_location_id = l1.id
-      JOIN locations l2 ON sh.to_location_id = l2.id
+      JOIN locations l1 ON sh.from_locations_id = l1.id
+      JOIN locations l2 ON sh.to_locations_id = l2.id
       LEFT JOIN users u ON sh.user_id = u.id
       ORDER BY sh.created_at DESC
     `;
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const { product_id, from_location_id, to_location_id, quantity, type, user_id } = body;
 
     const result = await sql`
-      INSERT INTO stock_history (product_id, from_location_id, to_location_id, quantity, type, user_id, created_at) 
+      INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
       VALUES (${product_id}, ${from_location_id}, ${to_location_id}, ${quantity}, ${type}, ${user_id}, NOW()) 
       RETURNING *
     `;
