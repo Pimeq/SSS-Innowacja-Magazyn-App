@@ -14,8 +14,9 @@ import { useEffect, useState } from "react";
 
 interface User {
   id: number;
-  email: string;
-  name: string;
+  username: string;
+  first_name: string;
+  last_name: string;
   role: "admin" | "worker" | "viewer";
   active: boolean;
   created_at: string;
@@ -26,8 +27,9 @@ export default function UsersPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
-    email: "",
-    name: "",
+    username: "",
+    first_name: "",
+    last_name: "",
     password: "",
     role: "worker" as const,
     active: true,
@@ -54,8 +56,9 @@ export default function UsersPage() {
     if (user) {
       setEditingUser(user);
       setFormData({
-        email: user.email,
-        name: user.name,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
         password: "",
         role: user.role,
         active: user.active,
@@ -63,8 +66,9 @@ export default function UsersPage() {
     } else {
       setEditingUser(null);
       setFormData({
-        email: "",
-        name: "",
+        username: "",
+        first_name: "",
+        last_name: "",
         password: "",
         role: "worker",
         active: true,
@@ -84,8 +88,9 @@ export default function UsersPage() {
     try {
       if (editingUser) {
         const updateData = {
-          email: formData.email,
-          name: formData.name,
+          username: formData.username,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
           role: formData.role,
           active: formData.active,
           ...(formData.password && { password: formData.password }),
@@ -151,7 +156,6 @@ export default function UsersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Imię i nazwisko</TableHead>
                   <TableHead>Rola</TableHead>
@@ -164,8 +168,8 @@ export default function UsersPage() {
                 {users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>{user.id}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.first_name} {user.last_name}</TableCell>
                     <TableCell>
                       <Badge className={getRoleBadge(user.role)}>
                         {user.role}
@@ -215,25 +219,36 @@ export default function UsersPage() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Nazwa użytkownika</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
+                    id="username"
+                    value={formData.username}
                     onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                      setFormData({ ...formData, username: e.target.value })
                     }
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="name">Imię i nazwisko</Label>
+                  <Label htmlFor="first_name">Imię</Label>
                   <Input
-                    id="name"
-                    value={formData.name}
+                    id="first_name"
+                    value={formData.first_name}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setFormData({ ...formData, first_name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="last_name">Nazwisko</Label>
+                  <Input
+                    id="last_name"
+                    value={formData.last_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, last_name: e.target.value })
                     }
                     required
                   />

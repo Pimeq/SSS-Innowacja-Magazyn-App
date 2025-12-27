@@ -10,15 +10,15 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { email, name, password, role, active } = body;
+    const { username, first_name, last_name, password, role, active } = body;
     const id = parseInt(params.id);
 
     let result;
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      result = await sql`UPDATE users SET email = ${email}, name = ${name}, password = ${hashedPassword}, role = ${role}, active = ${active} WHERE id = ${id} RETURNING id, name, email, role, active`;
+      result = await sql`UPDATE users SET username = ${username}, first_name = ${first_name}, last_name = ${last_name}, password = ${hashedPassword}, role = ${role}, active = ${active} WHERE id = ${id} RETURNING id, username, first_name, last_name, role, active`;
     } else {
-      result = await sql`UPDATE users SET email = ${email}, name = ${name}, role = ${role}, active = ${active} WHERE id = ${id} RETURNING id, name, email, role, active`;
+      result = await sql`UPDATE users SET username = ${username}, first_name = ${first_name}, last_name = ${last_name}, role = ${role}, active = ${active} WHERE id = ${id} RETURNING id, username, first_name, last_name, role, active`;
     }
 
     return NextResponse.json(result[0]);
