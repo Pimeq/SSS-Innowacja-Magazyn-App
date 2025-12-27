@@ -100,9 +100,7 @@ export default function LocationsPage() {
     }
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("pl-PL");
-  };
+  // Removed date display as locations table doesn't include created_at
 
   return (
     <AdminLayout title="Lokalizacje">
@@ -118,46 +116,54 @@ export default function LocationsPage() {
         </div>
 
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-white">
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead className="w-20">ID</TableHead>
                   <TableHead>Nazwa</TableHead>
                   <TableHead>Opis</TableHead>
-                  <TableHead>Data utworzenia</TableHead>
                   <TableHead className="text-right">Akcje</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {locations.map((location) => (
-                  <TableRow key={location.id}>
-                    <TableCell>{location.id}</TableCell>
-                    <TableCell className="font-medium">{location.name}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {location.description}
-                    </TableCell>
-                    <TableCell>{formatDate(location.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDialog(location)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(location.id)}
-                        >
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
-                      </div>
+                {locations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-slate-500 py-6">
+                      Brak lokalizacji. Dodaj pierwszą lokalizację, aby zacząć.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  locations.map((location) => (
+                    <TableRow key={location.id} className="even:bg-slate-50 hover:bg-slate-100/60 transition-colors">
+                      <TableCell>{location.id}</TableCell>
+                      <TableCell className="font-medium text-slate-800">{location.name}</TableCell>
+                      <TableCell className="max-w-lg truncate text-slate-700" title={location.description}>
+                        {location.description}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            title="Edytuj lokalizację"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDialog(location)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            title="Usuń lokalizację"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(location.id)}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
