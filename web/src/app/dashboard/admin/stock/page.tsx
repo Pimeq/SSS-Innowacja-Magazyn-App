@@ -35,6 +35,8 @@ export default function StockPage() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productStocks, setProductStocks] = useState<Stock[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [editingStock, setEditingStock] = useState<Stock | null>(null);
@@ -67,6 +69,18 @@ export default function StockPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openProductManager = async (product: Product) => {
+    setSelectedProduct(product);
+    try {
+      const res = await fetch(`/api/admin/stock?product_id=${product.id}`);
+      const data = await res.json();
+      setProductStocks(data);
+    } catch (error) {
+      console.error("Failed to fetch product stocks:", error);
+    }
+    setIsDialogOpen(true);
   };
 
   const handleOpenDialog = (stock?: Stock) => {
@@ -167,130 +181,197 @@ export default function StockPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
                   <TableHead>Produkt</TableHead>
-                  <TableHead>Lokalizacja</TableHead>
-                  <TableHead>Ilość</TableHead>
-                  <TableHead>Ostatnia aktualizacja</TableHead>
-                  <TableHead className="text-right">Akcje</TableHead>
+                  <TableHead>Łączna ilość</TableHead>
+                  <TableHead className="text-right">Zarządzaj</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stocks.map((stock) => (
-                  <TableRow key={stock.id}>
-                    <TableCell>{stock.id}</TableCell>
-                    <TableCell>{stock.product_name}</TableCell>
-                    <TableCell>{stock.location_name}</TableCell>
-                    <TableCell className="font-medium">
-                      {stock.quantity} szt.
-                    </TableCell>
-                    <TableCell>{formatDate(stock.updated_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDialog(stock)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="Przenieś do innej lokalizacji"
-                          onClick={() => handleOpenMoveDialog(stock)}
-                        >
-                          <ArrowRightLeft className="size-4 text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(stock.id)}
-                        >
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {products.map((p) => {
+                  const total = stocks
+                    .filter((s) => s.product_id === p.id)
+                    .reduce((sum, s) => sum + s.quantity, 0);
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="font-medium">{total} szt.</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" onClick={() => openProductManager(p)}>Zarządzaj</Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
 
+        {/* Product manager dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                {editingStock ? "Edytuj zasób" : "Dodaj nowy zasób"}
-              </DialogTitle>
+              <DialogTitle>Zarządzaj produktem: {selectedProduct?.name}</DialogTitle>
             </DialogHeader>
+            <div className="space-y-6">
+              {/* Per-location list */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lokalizacja</TableHead>
+                    <TableHead>Ilość</TableHead>
+                    <TableHead className="text-right">Akcje</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {locations.map((loc) => {
+                    const row = productStocks.find((s) => s.location_id === loc.id);
+                    const qty = row?.quantity ?? 0;
+                    return (
+                      <TableRow key={loc.id}>
+                        <TableCell>{loc.name}</TableCell>
+                        <TableCell className="font-medium">{qty} szt.</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  if (row) {
+                                    await fetch(`/api/admin/stock/${row.id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ quantity: qty + 1 }),
+                                    });
+                                  } else if (selectedProduct) {
+                                    await fetch(`/api/admin/stock`, {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ product_id: selectedProduct.id, location_id: loc.id, quantity: 1 }),
+                                    });
+                                  }
+                                  const res = await fetch(`/api/admin/stock?product_id=${selectedProduct?.id}`);
+                                  setProductStocks(await res.json());
+                                  await fetchData();
+                                } catch (error) { console.error(error); }
+                              }}
+                            >+1</Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  if (row && qty > 0) {
+                                    await fetch(`/api/admin/stock/${row.id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({ quantity: qty - 1 }),
+                                    });
+                                    const res = await fetch(`/api/admin/stock?product_id=${selectedProduct?.id}`);
+                                    setProductStocks(await res.json());
+                                    await fetchData();
+                                  }
+                                } catch (error) { console.error(error); }
+                              }}
+                            >-1</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
 
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4 py-4">
-                {!editingStock && (
-                  <>
-                    <div>
-                      <Label htmlFor="product_id">Produkt</Label>
-                      <Select value={formData.product_id} onValueChange={(value) => setFormData({ ...formData, product_id: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Wybierz produkt" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map((p) => (
-                            <SelectItem key={p.id} value={p.id.toString()}>
-                              {p.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+              {/* Transfer section */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!selectedProduct) return;
+                  const from = productStocks.find((s) => s.location_id === movingStock?.location_id);
+                  try {
+                    await fetch("/api/admin/stock/move", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        product_id: selectedProduct.id,
+                        from_location_id: movingStock?.location_id ?? productStocks[0]?.location_id,
+                        to_location_id: parseInt(moveData.to_location_id),
+                        quantity: parseInt(moveData.quantity),
+                      }),
+                    });
+                    const res = await fetch(`/api/admin/stock?product_id=${selectedProduct.id}`);
+                    setProductStocks(await res.json());
+                    await fetchData();
+                  } catch (error) { console.error("Failed to move", error); }
+                }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Źródło</Label>
+                    <Select
+                      value={movingStock?.location_id?.toString() ?? ""}
+                      onValueChange={(value) => {
+                        const locId = parseInt(value);
+                        const row = productStocks.find((s) => s.location_id === locId);
+                        setMovingStock(row ?? null);
+                        setMoveData({ ...moveData, quantity: (row?.quantity ?? 0).toString() });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Wybierz lokalizację" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productStocks.map((s) => (
+                          <SelectItem key={s.location_id} value={s.location_id.toString()}>
+                            {s.location_name} ({s.quantity})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    <div>
-                      <Label htmlFor="location_id">Lokalizacja</Label>
-                      <Select value={formData.location_id} onValueChange={(value) => setFormData({ ...formData, location_id: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Wybierz lokalizację" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.map((l) => (
+                  <div>
+                    <Label>Cel</Label>
+                    <Select
+                      value={moveData.to_location_id}
+                      onValueChange={(value) => setMoveData({ ...moveData, to_location_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Wybierz lokalizację" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations
+                          .filter((l) => l.id !== movingStock?.location_id)
+                          .map((l) => (
                             <SelectItem key={l.id} value={l.id.toString()}>
                               {l.name}
                             </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                )}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="quantity">Ilość</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    value={formData.quantity}
-                    onChange={(e) =>
-                      setFormData({ ...formData, quantity: e.target.value })
-                    }
-                    required
-                  />
+                  <div>
+                    <Label>Ilość</Label>
+                    <Input
+                      type="number"
+                      value={moveData.quantity}
+                      onChange={(e) => setMoveData({ ...moveData, quantity: e.target.value })}
+                      min={1}
+                      max={movingStock?.quantity ?? undefined}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCloseDialog}
-                >
-                  Anuluj
-                </Button>
-                <Button type="submit">
-                  {editingStock ? "Zapisz zmiany" : "Dodaj zasób"}
-                </Button>
-              </DialogFooter>
-            </form>
+                <DialogFooter className="mt-4">
+                  <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                    Zamknij
+                  </Button>
+                  <Button type="submit">Przenieś</Button>
+                </DialogFooter>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
 
