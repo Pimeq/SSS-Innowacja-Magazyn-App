@@ -18,7 +18,7 @@ export function AdminLayout({ title, children }: AdminLayoutProps) {
         <AdminHeader title={title} />
 
         <main className="flex-1 overflow-auto ml-64">
-          <div className="p-8">{children}</div>
+          <div className="p-8 text-slate-800 leading-relaxed md:text-[15px]">{children}</div>
         </main>
       </div>
     </div>

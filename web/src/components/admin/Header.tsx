@@ -17,7 +17,7 @@ export function AdminHeader({ title }: AdminHeaderProps) {
             <Input
               type="text"
               placeholder="Szukaj..."
-              className="pl-10"
+              className="pl-10 placeholder:text-slate-500 text-slate-900"
             />
           </div>
 
