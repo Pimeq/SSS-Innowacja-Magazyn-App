@@ -8,31 +8,43 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const locationId = searchParams.get("location_id");
 
-    let query = `
-      SELECT 
-        s.id, 
-        s.product_id, 
-        s.location_id, 
-        s.quantity,
-        p.name as product_name,
-        p.qr_code,
-        l.name as location_name,
-        s.updated_at
-      FROM stock s
-      JOIN products p ON s.product_id = p.id
-      JOIN locations l ON s.location_id = l.id
-    `;
-
-    const params: any[] = [];
-
+    let result;
     if (locationId) {
-      query += " WHERE s.location_id = $1";
-      params.push(parseInt(locationId));
+      const locId = parseInt(locationId);
+      result = await sql`
+        SELECT 
+          s.id, 
+          s.product_id, 
+          s.location_id, 
+          s.quantity,
+          p.name as product_name,
+          p.qr_code,
+          l.name as location_name,
+          s.updated_at
+        FROM stock s
+        JOIN products p ON s.product_id = p.id
+        JOIN locations l ON s.location_id = l.id
+        WHERE s.location_id = ${locId}
+        ORDER BY s.updated_at DESC
+      `;
+    } else {
+      result = await sql`
+        SELECT 
+          s.id, 
+          s.product_id, 
+          s.location_id, 
+          s.quantity,
+          p.name as product_name,
+          p.qr_code,
+          l.name as location_name,
+          s.updated_at
+        FROM stock s
+        JOIN products p ON s.product_id = p.id
+        JOIN locations l ON s.location_id = l.id
+        ORDER BY s.updated_at DESC
+      `;
     }
-
-    query += " ORDER BY s.updated_at DESC";
-
-    const result = await sql(query, params.length > 0 ? params : []);
+    
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching stock:", error);
@@ -48,27 +60,18 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { product_id, location_id, quantity } = body;
 
-    const existingStock = await sql(
-      "SELECT * FROM stock WHERE product_id = $1 AND location_id = $2",
-      [product_id, location_id]
-    );
+    const existingStock = await sql`SELECT * FROM stock WHERE product_id = ${product_id} AND location_id = ${location_id}`;
 
     if (existingStock.length > 0) {
-      const result = await sql(
-        `UPDATE stock 
-         SET quantity = quantity + $1, updated_at = NOW() 
-         WHERE product_id = $2 AND location_id = $3 
-         RETURNING *`,
-        [quantity, product_id, location_id]
-      );
+      const result = await sql`UPDATE stock 
+         SET quantity = quantity + ${quantity}, updated_at = NOW() 
+         WHERE product_id = ${product_id} AND location_id = ${location_id} 
+         RETURNING *`;
       return NextResponse.json(result[0]);
     } else {
-      const result = await sql(
-        `INSERT INTO stock (product_id, location_id, quantity) 
-         VALUES ($1, $2, $3) 
-         RETURNING *`,
-        [product_id, location_id, quantity]
-      );
+      const result = await sql`INSERT INTO stock (product_id, location_id, quantity) 
+         VALUES (${product_id}, ${location_id}, ${quantity}) 
+         RETURNING *`;
       return NextResponse.json(result[0]);
     }
   } catch (error) {

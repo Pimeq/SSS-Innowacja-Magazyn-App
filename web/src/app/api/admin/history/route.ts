@@ -5,8 +5,8 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET(request: Request) {
   try {
-    const result = await sql(
-      `SELECT 
+    const result = await sql`
+      SELECT 
         sh.id,
         sh.product_id,
         sh.location_id,
@@ -21,8 +21,8 @@ export async function GET(request: Request) {
       JOIN products p ON sh.product_id = p.id
       JOIN locations l ON sh.location_id = l.id
       LEFT JOIN users u ON sh.performed_by = u.id
-      ORDER BY sh.created_at DESC`
-    );
+      ORDER BY sh.created_at DESC
+    `;
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching history:", error);
@@ -38,12 +38,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { product_id, location_id, quantity_change, action, performed_by } = body;
 
-    const result = await sql(
-      `INSERT INTO stock_history (product_id, location_id, quantity_change, action, performed_by) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING *`,
-      [product_id, location_id, quantity_change, action, performed_by]
-    );
+    const result = await sql`
+      INSERT INTO stock_history (product_id, location_id, quantity_change, action, performed_by) 
+      VALUES (${product_id}, ${location_id}, ${quantity_change}, ${action}, ${performed_by}) 
+      RETURNING *
+    `;
 
     return NextResponse.json(result[0]);
   } catch (error) {

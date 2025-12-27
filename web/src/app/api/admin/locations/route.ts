@@ -5,9 +5,7 @@ const sql = neon(process.env.DATABASE_URL || "");
 
 export async function GET() {
   try {
-    const locations = await sql(
-      "SELECT id, name, description FROM locations ORDER BY name ASC"
-    );
+    const locations = await sql`SELECT id, name, description, created_at FROM locations ORDER BY name ASC`;
 
     return NextResponse.json(locations);
   } catch (error) {
@@ -24,10 +22,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, description } = body;
 
-    const result = await sql(
-      "INSERT INTO locations (name, description) VALUES ($1, $2) RETURNING *",
-      [name, description]
-    );
+    const result = await sql`INSERT INTO locations (name, description) VALUES (${name}, ${description}) RETURNING *`;
 
     return NextResponse.json(result[0], { status: 201 });
   } catch (error) {

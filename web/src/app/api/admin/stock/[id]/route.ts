@@ -12,10 +12,7 @@ export async function PUT(
     const { quantity } = body;
     const id = parseInt(params.id);
 
-    const result = await sql(
-      "UPDATE stock SET quantity = $1, updated_at = NOW() WHERE id = $2 RETURNING *",
-      [quantity, id]
-    );
+    const result = await sql`UPDATE stock SET quantity = ${quantity}, updated_at = NOW() WHERE id = ${id} RETURNING *`;
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Stock not found" }, { status: 404 });
@@ -38,7 +35,7 @@ export async function DELETE(
   try {
     const id = parseInt(params.id);
 
-    const result = await sql("DELETE FROM stock WHERE id = $1 RETURNING id", [id]);
+    const result = await sql`DELETE FROM stock WHERE id = ${id} RETURNING id`;
 
     if (result.length === 0) {
       return NextResponse.json({ error: "Stock not found" }, { status: 404 });
