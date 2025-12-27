@@ -4,6 +4,8 @@ import { AdminLayout } from "@/components/admin/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, Users, MapPin, Warehouse, AlertTriangle, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 
 interface StatsCard {
@@ -14,8 +16,16 @@ interface StatsCard {
 }
 
 export default function AdminDashboard() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [stats, setStats] = useState<StatsCard[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (session && session.user?.role !== 'admin') {
+      router.push('/dashboard/worker');
+    }
+  }, [session, router]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -58,6 +68,10 @@ export default function AdminDashboard() {
 
     fetchStats();
   }, []);
+
+  if (!session || session.user?.role !== 'admin') {
+    return null;
+  }
 
   return (
     <AdminLayout title="Dashboard">
