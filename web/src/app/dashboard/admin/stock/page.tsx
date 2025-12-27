@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowRightLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Stock {
@@ -36,13 +36,16 @@ export default function StockPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [editingStock, setEditingStock] = useState<Stock | null>(null);
+  const [movingStock, setMovingStock] = useState<Stock | null>(null);
   const [formData, setFormData] = useState({
     product_id: "",
     location_id: "",
     quantity: "",
   });
   const [loading, setLoading] = useState(true);
+  const [moveData, setMoveData] = useState({ to_location_id: "", quantity: "" });
 
   useEffect(() => {
     fetchData();
@@ -88,6 +91,17 @@ export default function StockPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingStock(null);
+  };
+
+  const handleOpenMoveDialog = (stock: Stock) => {
+    setMovingStock(stock);
+    setMoveData({ to_location_id: "", quantity: stock.quantity.toString() });
+    setIsMoveDialogOpen(true);
+  };
+
+  const handleCloseMoveDialog = () => {
+    setIsMoveDialogOpen(false);
+    setMovingStock(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -183,6 +197,14 @@ export default function StockPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          title="Przenieś do innej lokalizacji"
+                          onClick={() => handleOpenMoveDialog(stock)}
+                        >
+                          <ArrowRightLeft className="size-4 text-blue-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleDelete(stock.id)}
                         >
                           <Trash2 className="size-4 text-red-500" />
@@ -267,6 +289,79 @@ export default function StockPage() {
                 <Button type="submit">
                   {editingStock ? "Zapisz zmiany" : "Dodaj zasób"}
                 </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Move dialog */}
+        <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Przenieś zasób</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!movingStock) return;
+                try {
+                  await fetch("/api/admin/stock/move", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      product_id: movingStock.product_id,
+                      from_location_id: movingStock.location_id,
+                      to_location_id: parseInt(moveData.to_location_id),
+                      quantity: parseInt(moveData.quantity),
+                    }),
+                  });
+                  await fetchData();
+                  handleCloseMoveDialog();
+                } catch (error) {
+                  console.error("Failed to move stock:", error);
+                }
+              }}
+            >
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label>Docelowa lokalizacja</Label>
+                  <Select
+                    value={moveData.to_location_id}
+                    onValueChange={(value) => setMoveData({ ...moveData, to_location_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Wybierz lokalizację" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations
+                        .filter((l) => l.id !== movingStock?.location_id)
+                        .map((l) => (
+                          <SelectItem key={l.id} value={l.id.toString()}>
+                            {l.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Ilość do przeniesienia</Label>
+                  <Input
+                    type="number"
+                    value={moveData.quantity}
+                    onChange={(e) => setMoveData({ ...moveData, quantity: e.target.value })}
+                    min={1}
+                    max={movingStock?.quantity ?? undefined}
+                    required
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleCloseMoveDialog}>
+                  Anuluj
+                </Button>
+                <Button type="submit">Przenieś</Button>
               </DialogFooter>
             </form>
           </DialogContent>
