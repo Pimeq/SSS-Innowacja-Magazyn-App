@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/__nextauth/authOptions";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -7,6 +9,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { product_id, from_location_id, to_location_id, quantity, user_id } = body;
+    const session = await getServerSession(authOptions);
+    const actorId = user_id ?? (session?.user?.id ? parseInt(session.user.id) : null);
 
     if (!product_id || !from_location_id || !to_location_id || !quantity) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Write history
-    await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) VALUES (${product_id}, ${from_location_id}, ${to_location_id}, ${moveQty}, ${"stock_move"}, ${user_id ?? null}, NOW())`;
+    await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) VALUES (${product_id}, ${from_location_id}, ${to_location_id}, ${moveQty}, ${"stock_move"}, ${actorId}, NOW())`;
 
     return NextResponse.json({ from: updatedFrom[0], to: updatedTo[0] });
   } catch (error) {
