@@ -99,10 +99,19 @@ export default function ProductsPage() {
     if (!confirm("Czy na pewno chcesz usunąć ten produkt?")) return;
 
     try {
-      await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        const message =
+          data?.error || `Nie udało się usunąć produktu (HTTP ${res.status}).`;
+        alert(message);
+        console.error("Delete product failed:", data);
+        return;
+      }
       await fetchProducts();
     } catch (error) {
       console.error("Failed to delete product:", error);
+      alert("Nie udało się usunąć produktu.");
     }
   };
 
@@ -115,71 +124,75 @@ export default function ProductsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-slate-600">Zarządzaj swoimi produktami</p>
+            <p className="text-slate-600 text-lg">Zarządzaj swoimi produktami</p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button onClick={() => handleOpenDialog()} className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl">
             <Plus className="size-4 mr-2" />
             Dodaj produkt
           </Button>
         </div>
 
-        <Card>
+        <Card className="border-0 shadow-xl">
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nazwa</TableHead>
-                  <TableHead>Kod QR</TableHead>
-                  <TableHead>Opis</TableHead>
-                  <TableHead>Data utworzenia</TableHead>
-                  <TableHead className="text-right">Akcje</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>{product.id}</TableCell>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="gap-1">
-                        <QrCode className="size-3" />
-                        {product.qr_code}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {product.description}
-                    </TableCell>
-                    <TableCell>{formatDate(product.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDialog(product)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(product.id)}
-                        >
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-100">
+                    <TableHead className="font-semibold text-slate-700">ID</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Nazwa</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Kod QR</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Opis</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Data utworzenia</TableHead>
+                    <TableHead className="text-right font-semibold text-slate-700">Akcje</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="font-medium text-slate-600">{product.id}</TableCell>
+                      <TableCell className="font-semibold text-slate-800">{product.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="gap-1.5 border-blue-200 bg-blue-50 text-blue-700 shadow-sm">
+                          <QrCode className="size-3" />
+                          {product.qr_code}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate text-slate-600">
+                        {product.description}
+                      </TableCell>
+                      <TableCell className="text-slate-600">{formatDate(product.created_at)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDialog(product)}
+                            className="hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(product.id)}
+                            className="hover:bg-red-50 hover:text-red-600 transition-all"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px] border-0 shadow-2xl">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-slate-50 dark:to-slate-300">
                 {editingProduct ? "Edytuj produkt" : "Dodaj nowy produkt"}
               </DialogTitle>
             </DialogHeader>
@@ -187,31 +200,33 @@ export default function ProductsPage() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="name">Nazwa produktu</Label>
+                  <Label htmlFor="name" className="text-slate-700 dark:text-slate-200 font-medium">Nazwa produktu</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="qr_code">Kod QR</Label>
+                  <Label htmlFor="qr_code" className="text-slate-700 dark:text-slate-200 font-medium">Kod QR</Label>
                   <Input
                     id="qr_code"
                     value={formData.qr_code}
                     onChange={(e) =>
                       setFormData({ ...formData, qr_code: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Opis</Label>
+                  <Label htmlFor="description" className="text-slate-700 dark:text-slate-200 font-medium">Opis</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
@@ -219,20 +234,22 @@ export default function ProductsPage() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                     rows={3}
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCloseDialog}
+                  className="hover:bg-slate-50"
                 >
                   Anuluj
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30">
                   {editingProduct ? "Zapisz zmiany" : "Dodaj produkt"}
                 </Button>
               </DialogFooter>

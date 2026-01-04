@@ -26,11 +26,13 @@ export function AdminSidebar() {
   const isActive = (href: string) => pathname === href;
 
   return (
-    <div className="w-64 bg-slate-900 text-white h-screen flex flex-col fixed left-0 top-0">
-      <div className="p-6 border-b border-slate-700">
-        <h1 className="flex items-center gap-2 font-bold text-lg">
-          <Warehouse className="size-6" />
-          Admin Panel
+    <div className="w-64 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-white h-screen flex flex-col fixed left-0 top-0 shadow-2xl">
+      <div className="p-6 border-b border-slate-700/50">
+        <h1 className="flex items-center gap-3 font-bold text-xl">
+          <div className="p-2 bg-blue-600 rounded-lg shadow-lg">
+            <Warehouse className="size-5" />
+          </div>
+          <span className="bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">Admin Panel</span>
         </h1>
       </div>
 
@@ -44,14 +46,14 @@ export function AdminSidebar() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                     active
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/30"
+                      : "text-slate-300 hover:bg-slate-800/50 hover:text-white hover:translate-x-1"
                   }`}
                 >
                   <Icon className="size-5" />
-                  {item.label}
+                  <span className="font-medium">{item.label}</span>
                 </Link>
               </li>
             );
@@ -59,22 +61,22 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-slate-700 space-y-3">
-        <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold">
+      <div className="p-4 border-t border-slate-700/50 space-y-3">
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/30 rounded-xl">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-sm font-bold shadow-lg">
             A
           </div>
           <div>
-            <p className="text-sm font-medium">Admin</p>
+            <p className="text-sm font-semibold">Admin</p>
             <p className="text-xs text-slate-400">Administrator</p>
           </div>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-red-600/20 hover:text-red-400 transition-all duration-200 hover:translate-x-1"
         >
           <LogOut className="size-5" />
-          Wyloguj
+          <span className="font-medium">Wyloguj</span>
         </button>
       </div>
     </div>

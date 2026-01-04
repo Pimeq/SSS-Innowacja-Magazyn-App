@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface Location {
@@ -107,38 +107,42 @@ export default function LocationsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-slate-600">Zarządzaj lokalizacjami magazynu</p>
+            <p className="text-slate-600 text-lg">Zarządzaj lokalizacjami magazynu</p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button onClick={() => handleOpenDialog()} className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl">
             <Plus className="size-4 mr-2" />
             Dodaj lokalizację
           </Button>
         </div>
 
-        <Card>
+        <Card className="border-0 shadow-xl">
           <CardContent className="p-0 overflow-auto">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-white">
-                <TableRow>
-                  <TableHead className="w-20">ID</TableHead>
-                  <TableHead>Nazwa</TableHead>
-                  <TableHead>Opis</TableHead>
-                  <TableHead className="text-right">Akcje</TableHead>
+                <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-100">
+                  <TableHead className="w-20 font-semibold text-slate-700">ID</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Nazwa</TableHead>
+                  <TableHead className="font-semibold text-slate-700">Opis</TableHead>
+                  <TableHead className="text-right font-semibold text-slate-700">Akcje</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {locations.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-slate-500 py-6">
-                      Brak lokalizacji. Dodaj pierwszą lokalizację, aby zacząć.
+                    <TableCell colSpan={4} className="text-center text-slate-500 py-12">
+                      <div className="flex flex-col items-center gap-2">
+                        <MapPin className="size-12 text-slate-300" />
+                        <p className="font-medium">Brak lokalizacji</p>
+                        <p className="text-sm">Dodaj pierwszą lokalizację, aby zacząć.</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   locations.map((location) => (
-                    <TableRow key={location.id} className="even:bg-slate-50 hover:bg-slate-100/60 transition-colors">
-                      <TableCell>{location.id}</TableCell>
-                      <TableCell className="font-medium text-slate-800">{location.name}</TableCell>
-                      <TableCell className="max-w-lg truncate text-slate-700" title={location.description}>
+                    <TableRow key={location.id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="font-medium text-slate-600">{location.id}</TableCell>
+                      <TableCell className="font-semibold text-slate-800">{location.name}</TableCell>
+                      <TableCell className="max-w-lg truncate text-slate-600" title={location.description}>
                         {location.description}
                       </TableCell>
                       <TableCell className="text-right">
@@ -148,6 +152,7 @@ export default function LocationsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenDialog(location)}
+                            className="hover:bg-blue-50 hover:text-blue-600 transition-all"
                           >
                             <Pencil className="size-4" />
                           </Button>
@@ -156,8 +161,9 @@ export default function LocationsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(location.id)}
+                            className="hover:bg-red-50 hover:text-red-600 transition-all"
                           >
-                            <Trash2 className="size-4 text-red-500" />
+                            <Trash2 className="size-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -170,9 +176,9 @@ export default function LocationsPage() {
         </Card>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px] border-0 shadow-2xl">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-slate-50 dark:to-slate-300">
                 {editingLocation ? "Edytuj lokalizację" : "Dodaj nową lokalizację"}
               </DialogTitle>
             </DialogHeader>
@@ -180,19 +186,20 @@ export default function LocationsPage() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="name">Nazwa lokalizacji</Label>
+                  <Label htmlFor="name" className="text-slate-700 dark:text-slate-200 font-medium">Nazwa lokalizacji</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Opis</Label>
+                  <Label htmlFor="description" className="text-slate-700 dark:text-slate-200 font-medium">Opis</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
@@ -200,20 +207,22 @@ export default function LocationsPage() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                     rows={3}
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCloseDialog}
+                  className="hover:bg-slate-50"
                 >
                   Anuluj
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30">
                   {editingLocation ? "Zapisz zmiany" : "Dodaj lokalizację"}
                 </Button>
               </DialogFooter>

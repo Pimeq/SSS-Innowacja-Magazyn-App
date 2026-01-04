@@ -53,8 +53,7 @@ export default function HistoryPage() {
   };
 
   const formatDate = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString("pl-PL") + " " + d.toLocaleTimeString("pl-PL");
+    return new Date(date).toLocaleDateString("pl-PL");
   };
 
   return (
@@ -76,7 +75,7 @@ export default function HistoryPage() {
                   <TableHead>Typ</TableHead>
                   <TableHead>Ilość</TableHead>
                   <TableHead>Użytkownik</TableHead>
-                  <TableHead>Data i godzina</TableHead>
+                  <TableHead>Data</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
