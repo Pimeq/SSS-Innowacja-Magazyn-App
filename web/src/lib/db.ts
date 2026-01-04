@@ -367,6 +367,10 @@ export interface StockItemDetailed {
 	updated_at: Date
 }
 
+type StockItemDetailedRow = Omit<StockItemDetailed, "updated_at"> & {
+	updated_at: string | Date
+}
+
 export async function getStockList(): Promise<StockItemDetailed[]> {
 	try {
 		const result = await sql`
@@ -385,10 +389,10 @@ export async function getStockList(): Promise<StockItemDetailed[]> {
 			ORDER BY p.name ASC, l.name ASC
 		`
 
-		return result.map((row: any) => ({
+		return (result as StockItemDetailedRow[]).map((row) => ({
 			...row,
 			updated_at: new Date(row.updated_at),
-		})) as StockItemDetailed[]
+		}))
 	} catch (error) {
 		console.error("Error fetching stock list:", error)
 		return []

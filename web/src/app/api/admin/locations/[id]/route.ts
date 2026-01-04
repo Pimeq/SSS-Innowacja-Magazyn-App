@@ -5,12 +5,16 @@ const sql = neon(process.env.DATABASE_URL || "");
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json();
     const { name, description } = body;
-    const id = parseInt(params.id);
+    const resolvedParams = await context.params;
+    const id = Number.parseInt(resolvedParams.id, 10);
+    if (!Number.isFinite(id)) {
+      return NextResponse.json({ error: "Invalid location id" }, { status: 400 });
+    }
 
     const result = await sql`UPDATE locations SET name = ${name}, description = ${description} WHERE id = ${id} RETURNING *`;
 
@@ -26,10 +30,14 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } | Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await context.params;
+    const id = Number.parseInt(resolvedParams.id, 10);
+    if (!Number.isFinite(id)) {
+      return NextResponse.json({ error: "Invalid location id" }, { status: 400 });
+    }
     await sql`DELETE FROM locations WHERE id = ${id}`;
 
     return NextResponse.json({ success: true });

@@ -22,16 +22,25 @@ interface User {
   created_at: string;
 }
 
+type UserFormData = {
+  username: string;
+  first_name: string;
+  last_name: string;
+  password: string;
+  role: User["role"];
+  active: boolean;
+};
+
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UserFormData>({
     username: "",
     first_name: "",
     last_name: "",
     password: "",
-    role: "worker" as const,
+    role: "worker",
     active: true,
   });
   const [loading, setLoading] = useState(true);
@@ -118,10 +127,33 @@ export default function UsersPage() {
     if (!confirm("Czy na pewno chcesz usunąć tego użytkownika?")) return;
 
     try {
-      await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        let message = "Nie udało się usunąć użytkownika";
+        try {
+          const data = (await res.json()) as { error?: string; details?: unknown };
+          if (data?.error) message = data.error;
+          if (data?.details) {
+            const detailsText =
+              typeof data.details === "string"
+                ? data.details
+                : JSON.stringify(data.details, null, 2);
+            message = `${message}\n\n${detailsText}`;
+          }
+        } catch {
+          const text = await res.text();
+          if (text) message = text;
+        }
+        throw new Error(message);
+      }
       await fetchUsers();
     } catch (error) {
       console.error("Failed to delete user:", error);
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Nie udało się usunąć użytkownika"
+      );
     }
   };
 
@@ -143,75 +175,79 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-slate-600">Zarządzaj użytkownikami systemu</p>
+            <p className="text-slate-600 text-lg">Zarządzaj użytkownikami systemu</p>
           </div>
-          <Button onClick={() => handleOpenDialog()}>
+          <Button onClick={() => handleOpenDialog()} className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30 transition-all duration-200 hover:shadow-xl">
             <Plus className="size-4 mr-2" />
             Dodaj użytkownika
           </Button>
         </div>
 
-        <Card>
+        <Card className="border-0 shadow-xl">
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Imię i nazwisko</TableHead>
-                  <TableHead>Rola</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Data utworzenia</TableHead>
-                  <TableHead className="text-right">Akcje</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.id}</TableCell>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.first_name} {user.last_name}</TableCell>
-                    <TableCell>
-                      <Badge className={getRoleBadge(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={user.active ? "default" : "secondary"}
-                      >
-                        {user.active ? "Aktywny" : "Nieaktywny"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(user.created_at)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpenDialog(user)}
-                        >
-                          <Pencil className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(user.id)}
-                        >
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100/50 hover:from-slate-100 hover:to-slate-100">
+                    <TableHead className="font-semibold text-slate-700">Login</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Imię i nazwisko</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Rola</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Status</TableHead>
+                    <TableHead className="font-semibold text-slate-700">Data utworzenia</TableHead>
+                    <TableHead className="text-right font-semibold text-slate-700">Akcje</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                      <TableCell className="font-medium text-slate-800">{user.username}</TableCell>
+                      <TableCell className="font-medium text-slate-800">{user.first_name} {user.last_name}</TableCell>
+                      <TableCell>
+                        <Badge className={`${getRoleBadge(user.role)} border-0 shadow-sm`}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={user.active ? "default" : "secondary"}
+                          className="border-0 shadow-sm"
+                        >
+                          {user.active ? "Aktywny" : "Nieaktywny"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-600">{formatDate(user.created_at)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenDialog(user)}
+                            className="hover:bg-blue-50 hover:text-blue-600 transition-all"
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(user.id)}
+                            className="hover:bg-red-50 hover:text-red-600 transition-all"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px] border-0 shadow-2xl">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-slate-50 dark:to-slate-300">
                 {editingUser ? "Edytuj użytkownika" : "Dodaj nowego użytkownika"}
               </DialogTitle>
             </DialogHeader>
@@ -219,43 +255,46 @@ export default function UsersPage() {
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-4">
                 <div>
-                  <Label htmlFor="username">Nazwa użytkownika</Label>
+                  <Label htmlFor="username" className="text-slate-700 dark:text-slate-200 font-medium">Nazwa użytkownika</Label>
                   <Input
                     id="username"
                     value={formData.username}
                     onChange={(e) =>
                       setFormData({ ...formData, username: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="first_name">Imię</Label>
+                  <Label htmlFor="first_name" className="text-slate-700 dark:text-slate-200 font-medium">Imię</Label>
                   <Input
                     id="first_name"
                     value={formData.first_name}
                     onChange={(e) =>
                       setFormData({ ...formData, first_name: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="last_name">Nazwisko</Label>
+                  <Label htmlFor="last_name" className="text-slate-700 dark:text-slate-200 font-medium">Nazwisko</Label>
                   <Input
                     id="last_name"
                     value={formData.last_name}
                     onChange={(e) =>
                       setFormData({ ...formData, last_name: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="password">
+                  <Label htmlFor="password" className="text-slate-700 dark:text-slate-200 font-medium">
                     Hasło {editingUser && "(zostaw puste aby nie zmieniać)"}
                   </Label>
                   <Input
@@ -265,14 +304,15 @@ export default function UsersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
+                    className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                     required={!editingUser}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="role">Rola</Label>
-                  <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as any })}>
-                    <SelectTrigger>
+                  <Label htmlFor="role" className="text-slate-700 dark:text-slate-200 font-medium">Rola</Label>
+                  <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as User["role"] })}>
+                    <SelectTrigger className="mt-1.5 border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -283,7 +323,7 @@ export default function UsersPage() {
                   </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800/70 dark:bg-slate-900/30">
                   <input
                     type="checkbox"
                     id="active"
@@ -291,23 +331,24 @@ export default function UsersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, active: e.target.checked })
                     }
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
                   />
-                  <Label htmlFor="active" className="cursor-pointer">
+                  <Label htmlFor="active" className="cursor-pointer text-slate-700 dark:text-slate-200 font-medium">
                     Konto aktywne
                   </Label>
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleCloseDialog}
+                  className="hover:bg-slate-50"
                 >
                   Anuluj
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg shadow-blue-500/30">
                   {editingUser ? "Zapisz zmiany" : "Dodaj użytkownika"}
                 </Button>
               </DialogFooter>

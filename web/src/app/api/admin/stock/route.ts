@@ -91,16 +91,28 @@ export async function POST(request: Request) {
          WHERE product_id = ${product_id} AND location_id = ${location_id} 
          RETURNING *`;
       // Log adjustment in history (from = to = location)
-      await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
-        VALUES (${product_id}, ${location_id}, ${location_id}, ${quantity}, ${"stock_adjust"}, ${actorId}, NOW())`;
+      if (actorId !== null && Number.isFinite(actorId)) {
+        try {
+          await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
+            VALUES (${product_id}, ${location_id}, ${location_id}, ${quantity}, ${"stock_add"}, ${actorId}, NOW())`;
+        } catch (historyError) {
+          console.warn("Stock updated but failed to write history:", historyError);
+        }
+      }
       return NextResponse.json(result[0]);
     } else {
       const result = await sql`INSERT INTO stock (product_id, location_id, quantity) 
          VALUES (${product_id}, ${location_id}, ${quantity}) 
          RETURNING *`;
       // Log creation/add in history (from = to = location)
-      await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
-        VALUES (${product_id}, ${location_id}, ${location_id}, ${quantity}, ${"stock_add"}, ${actorId}, NOW())`;
+      if (actorId !== null && Number.isFinite(actorId)) {
+        try {
+          await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
+            VALUES (${product_id}, ${location_id}, ${location_id}, ${quantity}, ${"stock_add"}, ${actorId}, NOW())`;
+        } catch (historyError) {
+          console.warn("Stock inserted but failed to write history:", historyError);
+        }
+      }
       return NextResponse.json(result[0]);
     }
   } catch (error) {

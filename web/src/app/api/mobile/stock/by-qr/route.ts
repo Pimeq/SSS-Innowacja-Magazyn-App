@@ -5,6 +5,14 @@ import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL || "")
 
+type StockRow = {
+	id: number
+	location_id: number
+	location_name: string
+	quantity: number
+	updated_at: string | Date
+}
+
 export async function GET(request: NextRequest) {
 	// Verify this is a mobile app request
 	if (!verifyMobileRequest(request)) {
@@ -64,16 +72,16 @@ export async function GET(request: NextRequest) {
 						name: product.name,
 						qr_code: product.qr_code,
 					},
-					stock: stockData.map((row: any) => ({
+					stock: (stockData as StockRow[]).map((row) => ({
 						id: row.id,
 						locationId: row.location_id,
 						locationName: row.location_name,
 						quantity: row.quantity,
 						updatedAt: new Date(row.updated_at),
 					})),
-					totalQuantity: stockData.reduce(
-						(sum: number, row: any) => sum + row.quantity,
-						0
+					totalQuantity: (stockData as StockRow[]).reduce(
+						(sum, row) => sum + row.quantity,
+						0,
 					),
 				},
 			},
