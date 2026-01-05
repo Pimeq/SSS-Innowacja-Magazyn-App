@@ -1,12 +1,57 @@
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import { ScrollView, Text, TouchableOpacity, View } from "react-native"
+import {
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	View,
+	ActivityIndicator,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useEffect, useState } from "react"
+import { apiClient } from "../api/config"
 import "../global.css"
 
 export default function Index() {
 	const router = useRouter()
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState<string>("")
+	const [productsCount, setProductsCount] = useState<number>(0)
+	const [locationsCount, setLocationsCount] = useState<number>(0)
+	const [topProducts, setTopProducts] = useState<
+		Array<{
+			id: number
+			name: string
+			qr_code: string
+			total_quantity?: number
+		}>
+	>([])
+
+	useEffect(() => {
+		const load = async () => {
+			try {
+				setLoading(true)
+				setError("")
+				const [prodRes, locRes] = await Promise.all([
+					apiClient.getProducts(),
+					apiClient.getLocations(),
+				])
+				if (prodRes.success) {
+					setProductsCount(prodRes.count)
+					setTopProducts(prodRes.data.slice(0, 5))
+				}
+				if (locRes.success) {
+					setLocationsCount(locRes.count)
+				}
+			} catch (e: any) {
+				setError(e?.message || "Failed to load data")
+			} finally {
+				setLoading(false)
+			}
+		}
+		load()
+	}, [])
 
 	return (
 		<SafeAreaView className="flex-1 bg-gray-50">
@@ -59,7 +104,35 @@ export default function Index() {
 					</View>
 				</TouchableOpacity>
 
-				{/* Quick Stats Row */}
+				{/* Browse Products */}
+				<TouchableOpacity
+					className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8"
+					onPress={() => router.navigate("/products")}>
+					<View className="flex-row items-center justify-between">
+						<View>
+							<View className="bg-gray-100 self-start px-3 py-1 rounded-full mb-3">
+								<Text className="text-gray-700 text-xs font-bold uppercase">
+									Inventory
+								</Text>
+							</View>
+							<Text className="text-gray-900 text-2xl font-bold">
+								Browse Products
+							</Text>
+							<Text className="text-gray-500 mt-1 text-sm">
+								View all products and QR codes
+							</Text>
+						</View>
+						<View className="bg-indigo-50 p-4 rounded-2xl">
+							<Ionicons
+								name="list-outline"
+								size={28}
+								color="#4f46e5"
+							/>
+						</View>
+					</View>
+				</TouchableOpacity>
+
+				{/* Live Stats Row */}
 				<View className="flex-row gap-4 mb-8">
 					<View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
 						<View className="bg-indigo-50 w-10 h-10 rounded-full items-center justify-center mb-3">
@@ -69,62 +142,79 @@ export default function Index() {
 								color="#4f46e5"
 							/>
 						</View>
-						<Text className="text-2xl font-bold text-gray-900">1,234</Text>
-						<Text className="text-gray-500 text-xs font-medium">
-							Total Items
-						</Text>
+						{loading ?
+							<ActivityIndicator />
+						:	<Text className="text-2xl font-bold text-gray-900">
+								{productsCount}
+							</Text>
+						}
+						<Text className="text-gray-500 text-xs font-medium">Products</Text>
 					</View>
 					<View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-						<View className="bg-green-50 w-10 h-10 rounded-full items-center justify-center mb-3">
+						<View className="bg-amber-50 w-10 h-10 rounded-full items-center justify-center mb-3">
 							<Ionicons
-								name="arrow-up-circle-outline"
+								name="location-outline"
 								size={20}
-								color="#16a34a"
+								color="#d97706"
 							/>
 						</View>
-						<Text className="text-2xl font-bold text-gray-900">45</Text>
-						<Text className="text-gray-500 text-xs font-medium">
-							Added Today
-						</Text>
+						{loading ?
+							<ActivityIndicator />
+						:	<Text className="text-2xl font-bold text-gray-900">
+								{locationsCount}
+							</Text>
+						}
+						<Text className="text-gray-500 text-xs font-medium">Locations</Text>
 					</View>
 				</View>
 
-				{/* Recent Activity Section */}
+				{/* Products Preview (replaces mock recent activity) */}
 				<View className="pb-10">
 					<View className="flex-row justify-between items-center mb-4">
-						<Text className="text-lg font-bold text-gray-900">
-							Recent Activity
-						</Text>
-						<TouchableOpacity>
+						<Text className="text-lg font-bold text-gray-900">Products</Text>
+						<TouchableOpacity onPress={() => router.navigate("/products")}>
 							<Text className="text-blue-600 font-medium text-sm">See All</Text>
 						</TouchableOpacity>
 					</View>
 
-					{/* Mock List Items */}
-					{[1, 2, 3, 4].map((item) => (
-						<View
-							key={item}
-							className="bg-white p-4 rounded-2xl mb-3 flex-row items-center shadow-sm border border-gray-100">
-							<View className="w-12 h-12 bg-gray-50 rounded-xl items-center justify-center mr-4 border border-gray-100">
-								<Ionicons
-									name="barcode-outline"
-									size={24}
-									color="#6b7280"
-								/>
-							</View>
-							<View className="flex-1">
-								<Text className="font-bold text-gray-900 text-base">
-									Product Item #{item}
-								</Text>
-								<Text className="text-gray-500 text-xs mt-0.5">
-									Added 2 mins ago
-								</Text>
-							</View>
-							<View className="bg-green-50 px-3 py-1.5 rounded-lg">
-								<Text className="text-green-700 text-xs font-bold">+10</Text>
-							</View>
+					{error ?
+						<View className="bg-red-50 p-4 rounded-2xl border border-red-200">
+							<Text className="text-red-700">{error}</Text>
 						</View>
-					))}
+					: loading ?
+						<View className="bg-white p-4 rounded-2xl border border-gray-100 items-center">
+							<ActivityIndicator />
+							<Text className="text-gray-600 mt-2">Loading products...</Text>
+						</View>
+					: topProducts.length === 0 ?
+						<View className="bg-white p-4 rounded-2xl border border-gray-100">
+							<Text className="text-gray-600">No products yet</Text>
+						</View>
+					:	topProducts.map((item) => (
+							<View
+								key={item.id}
+								className="bg-white p-4 rounded-2xl mb-3 flex-row items-center shadow-sm border border-gray-100">
+								<View className="w-12 h-12 bg-gray-50 rounded-xl items-center justify-center mr-4 border border-gray-100">
+									<Ionicons
+										name="barcode-outline"
+										size={24}
+										color="#6b7280"
+									/>
+								</View>
+								<View className="flex-1">
+									<Text className="font-bold text-gray-900 text-base">
+										{item.name}
+									</Text>
+									<Text className="text-gray-500 text-xs mt-0.5">
+										QR: {item.qr_code}
+									</Text>
+									<Text className="text-gray-900 text-xs mt-0.5 font-semibold">
+										Total qty: {item.total_quantity ?? 0}
+									</Text>
+								</View>
+							</View>
+						))
+					}
 				</View>
 			</ScrollView>
 		</SafeAreaView>
