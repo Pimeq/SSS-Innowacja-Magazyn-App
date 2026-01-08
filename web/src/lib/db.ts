@@ -90,6 +90,37 @@ export async function createUser(
 	}
 }
 
+export async function getOrCreateMobileSystemUserId(): Promise<number> {
+	const systemUsername = process.env.MOBILE_SYSTEM_USERNAME || "mobile_app"
+
+	const existing = await getUserByUsername(systemUsername)
+	if (existing?.id) return existing.id
+
+	// Create an inactive system user for mobile operations.
+	// This ensures stock_history.user_id foreign key is satisfied.
+	const randomPassword = `mobile_${Math.random().toString(36).slice(2)}_${Date.now()}`
+	const hashedPassword = await bcrypt.hash(randomPassword, 10)
+
+	try {
+		const created = await sql`
+			INSERT INTO users (username, first_name, last_name, password, role, active, created_at)
+			VALUES (${systemUsername}, ${"Mobile"}, ${"App"}, ${hashedPassword}, ${"viewer"}, ${false}, NOW())
+			RETURNING id
+		`
+		if (created.length > 0 && created[0]?.id) {
+			return created[0].id as number
+		}
+	} catch (error) {
+		// If concurrent requests tried to create the user, fall back to re-select.
+		console.warn("Warning: failed to create mobile system user, retrying select:", error)
+	}
+
+	const retry = await getUserByUsername(systemUsername)
+	if (retry?.id) return retry.id
+
+	throw new Error("Unable to resolve mobile system user id")
+}
+
 export async function verifyPassword(
 	password: string,
 	hash: string
