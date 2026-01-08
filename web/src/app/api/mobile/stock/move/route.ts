@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getProductByQrCode, processStockMovement } from "@/lib/db"
+import { getOrCreateMobileSystemUserId, getProductByQrCode, processStockMovement } from "@/lib/db"
 import { verifyMobileRequest } from "@/lib/mobileAuth"
 
 interface MoveStockRequest {
@@ -54,11 +54,10 @@ export async function POST(request: NextRequest) {
 			)
 		}
 
-		// For mobile app, we use a special user ID (0) to indicate mobile operations
-		const MOBILE_USER_ID = 0
+		const mobileUserId = await getOrCreateMobileSystemUserId()
 
 		const result = await processStockMovement(
-			MOBILE_USER_ID,
+			mobileUserId,
 			"MOVE",
 			product.id,
 			quantity,
