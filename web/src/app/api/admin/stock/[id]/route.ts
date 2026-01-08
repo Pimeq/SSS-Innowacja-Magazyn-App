@@ -42,12 +42,17 @@ export async function PUT(
     if (result.length === 0) {
       return NextResponse.json({ error: "Stock not found" }, { status: 404 });
     }
-    // Log change in history (from = to = location)
-    const historyType = delta === 0 ? null : delta > 0 ? "stock_add" : "stock_remove";
-    if (historyType && actorId !== null && Number.isFinite(actorId)) {
+    // Log change in history
+    if (delta !== 0 && actorId !== null && Number.isFinite(actorId)) {
+      const isAdd = delta > 0;
+      const historyType = isAdd ? "IN" : "OUT";
+      const fromLoc = isAdd ? null : prev.location_id;
+      const toLoc = isAdd ? prev.location_id : null;
+      const absDelta = Math.abs(delta);
+      
       try {
         await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
-          VALUES (${prev.product_id}, ${prev.location_id}, ${prev.location_id}, ${delta}, ${historyType}, ${actorId}, NOW())`;
+          VALUES (${prev.product_id}, ${fromLoc}, ${toLoc}, ${absDelta}, ${historyType}, ${actorId}, NOW())`;
       } catch (historyError) {
         console.warn("Stock updated but failed to write history:", historyError);
       }
@@ -89,12 +94,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Stock not found" }, { status: 404 });
     }
 
-    // Log removal in history (from = to = location, negative quantity)
+    // Log removal in history
     if (actorId !== null && Number.isFinite(actorId)) {
       try {
         const prevQty = Number(prev.quantity);
+        const absQty = Math.abs(Number.isFinite(prevQty) ? prevQty : 0);
         await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) 
-          VALUES (${prev.product_id}, ${prev.location_id}, ${prev.location_id}, ${-Math.abs(Number.isFinite(prevQty) ? prevQty : 0)}, ${"stock_remove"}, ${actorId}, NOW())`;
+          VALUES (${prev.product_id}, ${prev.location_id}, NULL, ${absQty}, ${"OUT"}, ${actorId}, NOW())`;
       } catch (historyError) {
         console.warn("Stock deleted but failed to write history:", historyError);
       }

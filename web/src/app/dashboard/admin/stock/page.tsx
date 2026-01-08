@@ -385,7 +385,7 @@ function StockPageContent() {
                     if (!moveData.to_location_id) return;
                     if (!moveData.quantity) return;
                     try {
-                      await fetch("/api/admin/stock/move", {
+                      const moveResponse = await fetch("/api/admin/stock/move", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
@@ -395,13 +395,23 @@ function StockPageContent() {
                           quantity: parseInt(moveData.quantity),
                         }),
                       });
+                      
+                      if (!moveResponse.ok) {
+                        const error = await moveResponse.json();
+                        throw new Error(error.error || "Failed to move stock");
+                      }
+                      
                       const res = await fetch(`/api/admin/stock?product_id=${selectedProduct.id}`);
                       const updated: Stock[] = await res.json();
                       setProductStocks(updated);
                       const nextSource = updated.find((s) => s.location_id === movingStock.location_id) ?? (updated[0] ?? null);
                       setMovingStock(nextSource);
                       await fetchData();
-                    } catch (error) { console.error("Failed to move", error); }
+                      window.alert("Przeniesiono pomyślnie!");
+                    } catch (error) { 
+                      console.error("Error moving stock:", error); 
+                      window.alert("Błąd podczas przenoszenia: " + (error instanceof Error ? error.message : "Unknown error"));
+                    }
                   }}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

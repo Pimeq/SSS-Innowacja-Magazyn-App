@@ -43,7 +43,9 @@ export async function POST(request: Request) {
     }
 
     // 3. Write history
-    await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) VALUES (${product_id}, ${from_location_id}, ${to_location_id}, ${moveQty}, ${"stock_move"}, ${actorId}, NOW())`;
+    await sql`INSERT INTO stock_history (product_id, from_locations_id, to_locations_id, quantity, type, user_id, created_at) VALUES (${product_id}, ${from_location_id}, ${to_location_id}, ${moveQty}, 'MOVE', ${actorId}, NOW())`;
+
+    console.log(`✓ Stock moved: Product ${product_id}, ${moveQty} units from location ${from_location_id} to ${to_location_id} by user ${actorId}`);
 
     return NextResponse.json({ from: updatedFrom[0], to: updatedTo[0] });
   } catch (error) {
