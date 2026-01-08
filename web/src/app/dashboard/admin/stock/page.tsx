@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ArrowRightLeft } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface Stock {
@@ -32,7 +32,7 @@ interface Location {
   name: string;
 }
 
-export default function StockPage() {
+function StockPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const openedFromSearchRef = useRef<string | null>(null);
@@ -556,5 +556,21 @@ export default function StockPage() {
         </Dialog>
       </div>
     </AdminLayout>
+  );
+}
+
+export default function StockPage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout title="Magazyn">
+        <div className="space-y-6">
+          <div className="flex items-center justify-center p-12">
+            <p className="text-slate-600">Ładowanie...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    }>
+      <StockPageContent />
+    </Suspense>
   );
 }
