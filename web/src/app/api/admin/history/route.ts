@@ -22,10 +22,10 @@ export async function GET(request: Request) {
         u.last_name
       FROM stock_history sh
       JOIN products p ON sh.product_id = p.id
-      JOIN locations l1 ON sh.from_locations_id = l1.id
-      JOIN locations l2 ON sh.to_locations_id = l2.id
+      LEFT JOIN locations l1 ON sh.from_locations_id = l1.id
+      LEFT JOIN locations l2 ON sh.to_locations_id = l2.id
       LEFT JOIN users u ON sh.user_id = u.id
-      ORDER BY sh.created_at DESC
+      ORDER BY sh.created_at DESC, sh.id DESC
     `;
     return NextResponse.json(result);
   } catch (error) {
