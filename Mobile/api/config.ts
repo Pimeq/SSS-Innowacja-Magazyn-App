@@ -9,7 +9,7 @@ export const API_CONFIG = {
 	// For production:
 	// - Use your deployed Next.js app URL
 	// - Example: 'https://your-app.vercel.app/api/mobile'
-	BASE_URL: "http://10.0.0.72:3000/api/mobile",
+	BASE_URL: "http://192.168.18.32:3000/api/mobile",
 
 	// Mobile app key - must match MOBILE_APP_KEY in your Web/.env.local
 	MOBILE_APP_KEY: "sss-mobile-app-2024",
@@ -128,6 +128,28 @@ export class ApiClient {
 		}>("/stock/add", {
 			method: "POST",
 			body: JSON.stringify({ qrCode, locationId, quantity }),
+		})
+	}
+
+	// Move stock between locations
+	async moveStock(
+		qrCode: string,
+		fromLocationId: number,
+		toLocationId: number,
+		quantity: number
+	) {
+		return this.request<{
+			success: boolean
+			message: string
+			data: {
+				product: { id: number; name: string; qr_code: string }
+				fromLocationId: number
+				toLocationId: number
+				quantity: number
+			}
+		}>("/stock/move", {
+			method: "POST",
+			body: JSON.stringify({ qrCode, fromLocationId, toLocationId, quantity }),
 		})
 	}
 
