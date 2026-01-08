@@ -104,6 +104,30 @@ export default function Index() {
 					</View>
 				</TouchableOpacity>
 
+				{/* Move Stock */}
+				<TouchableOpacity
+					className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8"
+					onPress={() => router.navigate("/move")}>
+					<View className="flex-row items-center justify-between">
+						<View>
+							<View className="bg-indigo-50 self-start px-3 py-1 rounded-full mb-3">
+								<Text className="text-indigo-700 text-xs font-bold uppercase">
+									Stock
+								</Text>
+							</View>
+							<Text className="text-gray-900 text-2xl font-bold">
+								Move Items
+							</Text>
+							<Text className="text-gray-500 mt-1 text-sm">
+								Scan QR and move between locations
+							</Text>
+						</View>
+						<View className="bg-indigo-50 p-4 rounded-2xl">
+							<Ionicons name="swap-horizontal" size={28} color="#4f46e5" />
+						</View>
+					</View>
+				</TouchableOpacity>
+
 				{/* Browse Products */}
 				<TouchableOpacity
 					className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-8"
